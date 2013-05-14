@@ -21,22 +21,32 @@ float dfRoundBox(vec3 p, vec3 b, float r) {
   return length(max(abs(p) - b, 0.0)) - r;
 }
 
+float dfTorus(vec3 p, vec2 t) {
+  vec2 q = vec2(length(p.xz)-t.x, p.y);
+  return length(q)-t.y;
+}
+
+float displace(vec3 p) {
+  return sin(3*p.x)*sin(0.3*p.y)*sin(0.3*p.z);
+}
+
 float dist(vec3 rayPos, vec3 objPos) {
   vec3 p = rayPos - objPos;
-  float d = 50;
+  float d = 70;
   vec3 q = mod(p, d) - 0.5 * d;
   
-  float d1 = dfRoundBox(q, vec3(6, 6, 6), 1);
-  float d2 = dfSphere(q, 9);
-  float d3 = dfSphere(q, 3);
+  float d1 = dfRoundBox(q, vec3(12, 12, 12), 1);
+  float d2 = dfSphere(q, 15);
+  float d3 = dfTorus(q, vec2(16, 4));
+  float dd = 0.5 * displace(p);
 
-  return min(max(d1, -d2), d3);//min(d1, d2);
+  return max(-d3, d1) + dd;// dd);//min(max(d1, -d2), d3);//min(d1, d2);
 }
 
 float doLight(vec3 vd, vec3 p, vec3 n, vec3 lightPos) {
   vec3 ld = normalize(lightPos - p);      
   float specular = pow(clamp(dot(vd, reflect(ld, n)), 0, 1), 16) * 30 / length(lightPos - p);
-  return specular + 0.25 * clamp(dot(vd, reflect(ld, n)), 0, 1);
+  return specular + 0.25 * clamp(dot(ld, n), 0, 1);
 }
 
 void main() {
@@ -49,11 +59,17 @@ void main() {
 
   float t = fs_in.time;
 
-  vec3 spherePos = vec3(30 * cos(t * 1.73),  50 * sin(t * 2.3), t * - 100);
+  vec3 spherePos = vec3(30 * cos(t * 0.73),  50 * sin(t * 0.3), t * - 10);
 
   vec3 lightRPos = vec3(50 * cos(fs_in.time), 50 * sin(fs_in.time * 0.35), 50 * sin(fs_in.time));
   vec3 lightGPos = vec3(50 * cos(fs_in.time * 2.3), 30 * sin(fs_in.time * 1.45), 70 + 50 * sin(fs_in.time * 2.7));
   vec3 lightBPos = vec3(50 * cos(fs_in.time * 4.3), 50 * sin(fs_in.time * 0.65), 50 * sin(fs_in.time * 3.3));
+
+  float e = 0.001;    
+  vec3 dx = vec3(e, 0, 0);
+  vec3 dy = vec3(0, e, 0);
+  vec3 dz = vec3(0, 0, e);
+
 
   bool hit = false;
   float maxZ = 200.0;
@@ -74,10 +90,7 @@ void main() {
   }
 
   if (hit) {
-    float e = 0.001;
-    vec3 dx = vec3(e, 0, 0);
-    vec3 dy = vec3(0, e, 0);
-    vec3 dz = vec3(0, 0, e);
+
     vec3 n = normalize(vec3(
         dist(p + dx, spherePos) - dist(p - dx, spherePos),
         dist(p + dy, spherePos) - dist(p - dy, spherePos),
@@ -91,7 +104,7 @@ void main() {
     float fog = clamp(pow(1.1 * p.z / maxZ, 2), 0, 1);
     vec3 fogcol = vec3(0.2, 0.2, 0.2);
 
-  	color = vec4(mix(vec3(r, g, b), fogcol, fog), 1);
+  	color = vec4(mix(clamp(1 - steps * 0.01, 0, 1)  * vec3(r, g, b), fogcol, fog), 1);
 
   } else {
   	color = vec4(0.2, 0.2, 0.2, 1);
