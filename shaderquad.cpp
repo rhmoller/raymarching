@@ -30,7 +30,7 @@ static const GLfloat vao_data[] = {
 };
 
 void setup(const char* shaderFileName) {
-  p = loadShaders("raymarch_v.glsl", shaderFileName);
+  p = loadShaders("shaders/raymarch_v.glsl", shaderFileName);
 
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
