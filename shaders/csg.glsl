@@ -7,7 +7,7 @@ in VS_OUT {
 out vec4 color;
 
 float dfSphere(vec3 p, float s) {
-	return length(p) - s;
+  return length(p) - s;
 }
 
 float dfRoundBox(vec3 p, vec3 b, float r) {
