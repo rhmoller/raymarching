@@ -1,6 +1,6 @@
 
 compile:
-	g++ -o shaderquad shaderquad.cpp glutil.cpp -lglfw -lGL -lGLEW -lpthread
+	g++ -o shaderquad src/shaderquad.cpp src/glutil.cpp -lglfw -lGL -lGLEW -lpthread
 
 
 
