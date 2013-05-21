@@ -42,7 +42,7 @@ GLuint compileShader(GLuint id, const std::string &src) {
   return res;
 }
 
-GLuint loadShaders(const char* vshFileName, const char* fshFileName, const char* gshFileName) {
+GLuint loadShaders(const char* vshFileName, const char* fshFileName) {
   GLint ok = GL_TRUE;
 
   GLuint vsh = glCreateShader(GL_VERTEX_SHADER);
@@ -54,14 +54,6 @@ GLuint loadShaders(const char* vshFileName, const char* fshFileName, const char*
   std::string fshSrc = loadFile(fshFileName);
   printf("compiling: %s\n", fshFileName);
   ok &= compileShader(fsh, fshSrc);
-
-  GLuint gsh = 0;
-  if (gshFileName != NULL) {
-    glCreateShader(GL_GEOMETRY_SHADER);
-    std::string gshSrc = loadFile(gshFileName);
-    printf("compiling: %s\n", gshFileName);
-    ok &= compileShader(gsh, gshSrc);
-  }
   
   GLuint p = 0;
 
@@ -69,7 +61,6 @@ GLuint loadShaders(const char* vshFileName, const char* fshFileName, const char*
     p = glCreateProgram();
     if (vsh != 0) glAttachShader(p, vsh);
     if (fsh != 0) glAttachShader(p, fsh);
-    if (gsh != 0) glAttachShader(p, gsh);
     glLinkProgram(p);
   
     GLint res = GL_FALSE;
@@ -86,7 +77,6 @@ GLuint loadShaders(const char* vshFileName, const char* fshFileName, const char*
 
   if (vsh != 0) glDeleteShader(vsh);
   if (fsh != 0) glDeleteShader(fsh);
-  if (gsh != 0) glDeleteShader(gsh);
   
   return p;
 }
