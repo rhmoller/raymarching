@@ -8,6 +8,9 @@
 
 #include "glutil.h"
 
+#define WIN_WIDTH 800
+#define WIN_HEIGHT 600
+
 GLuint vao;
 GLuint vbo;
 
@@ -71,7 +74,7 @@ int main(int argc, char** argv) {
   glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 4);
   glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 2);
 
-  if (!glfwOpenWindow(800, 600, 0,0,0,0,0,0, GLFW_WINDOW)) {
+  if (!glfwOpenWindow(WIN_WIDTH, WIN_HEIGHT, 0,0,0,0,0,0, GLFW_WINDOW)) {
     fprintf(stderr, "Failed to open GLFW window\n");
     glfwTerminate();
     exit(EXIT_FAILURE);
