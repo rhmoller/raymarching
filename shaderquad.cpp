@@ -87,6 +87,11 @@ int main(int argc, char** argv) {
   
   glfwSetWindowTitle("Hello, OpenGL");
 
+  if (argc != 2) {
+    printf("Usage: shaderquad <fragment shader>\n");
+    exit(0);
+  }
+
   setup(argv[1]);
   if (p == 0) running = GL_FALSE;
 
