@@ -9,6 +9,8 @@ in VS_OUT {
 
 out vec4 color;
 
+//--- primitive distance estimators ---
+
 float dfSphere(vec3 p, float s) {
   return length(p) - s;
 }
@@ -21,6 +23,8 @@ float dfGround(vec3 p, float z) {
   return abs(z - p.y);
 }
 
+//--- distance estimator for object ---
+
 float dist(vec3 rayPos, vec3 objPos) {
   vec3 p = rayPos - objPos;
   float d = 90;
@@ -31,14 +35,32 @@ float dist(vec3 rayPos, vec3 objPos) {
   float d3 = dfSphere(q, 16);
 
   float dObj = max(-d3, max(d2, d1));
-  return min(dObj, dfGround(vec3(q.x, rayPos.y, q.z), -10));
+  return min(dObj, dfGround(vec3(q.x, rayPos.y, q.z), -50));
 }
+
+//--- normal estimator for object ---
+
+float e = 0.001;    
+vec3 dx = vec3(e, 0, 0);
+vec3 dy = vec3(0, e, 0);
+vec3 dz = vec3(0, 0, e);
+
+vec3 normal(vec3 p, vec3 objPos) {
+  return normalize(vec3(
+			dist(p + dx, objPos) - dist(p - dx, objPos),
+			dist(p + dy, objPos) - dist(p - dy, objPos),
+			dist(p + dz, objPos) - dist(p - dz, objPos)
+			));
+}
+
+//--- lighting ---
 
 float doLight(vec3 vd, vec3 p, vec3 n, vec3 lightPos) {
   vec3 ld = normalize(lightPos - p);      
   float specular = pow(clamp(dot(vd, reflect(ld, n)), 0, 1), 16) * 30 / length(lightPos - p);
   return specular + 0.25 * clamp(dot(ld, n), 0, 1);
 }
+
 
 void main() {
   float x = (gl_FragCoord.x) / (WIDTH / 2.0) - 1.0;
@@ -55,11 +77,6 @@ void main() {
   vec3 lightGPos = vec3(50 * cos(fs_in.time * 2.3), 30 * sin(fs_in.time * 1.45), 70 + 50 * sin(fs_in.time * 2.7));
   vec3 lightBPos = vec3(50 * cos(fs_in.time * 4.3), 50 * sin(fs_in.time * 0.65), 50 * sin(fs_in.time * 3.3));
 
-  float e = 0.001;    
-  vec3 dx = vec3(e, 0, 0);
-  vec3 dy = vec3(0, e, 0);
-  vec3 dz = vec3(0, 0, e);
-
   float maxZ = 300.0;
 
   float steps;
@@ -68,34 +85,45 @@ void main() {
   p += vd;
   while (!hit && p.z < maxZ) {
     float d = dist(p, spherePos);
-
-  	if (d <= 0.05) {
-  		hit = true;
-  	} else {
-	  	p += vd * d;
-  	}
-  	steps++;
+    if (d <= 0.05) {
+      hit = true;
+    } else {
+      p += vd * d;
+    }
+    steps++;
   }
 
   if (hit) {
-
-    vec3 n = normalize(vec3(
-        dist(p + dx, spherePos) - dist(p - dx, spherePos),
-        dist(p + dy, spherePos) - dist(p - dy, spherePos),
-        dist(p + dz, spherePos) - dist(p - dz, spherePos)
-    ));
-
+    vec3 n = normal(p, spherePos);
     float r = doLight(vd, p, n, lightRPos);
-    float g = doLight(vd, p, n, lightGPos);
-    float b = doLight(vd, p, n, lightBPos);
+
+    p += 0.1 * n;
+    vd = reflect(vd, n);
+    hit = false;
+
+    while (!hit && length(p) < 300) {
+      float d = dist(p, spherePos);
+      if (d <= 0.05) {
+	hit = true;
+      } else {
+	p += vd * d;
+      }
+      steps++;
+    }
+    
+    if (hit) {
+      float r2 = doLight(vd, p, n, lightRPos);
+      r = mix(r, r2, 0.5);
+    } else {
+      r = mix(r, 0.5, 0.5);
+    }
 
     float fog = clamp(pow(1.1 * p.z / maxZ, 2), 0, 1);
-    vec3 fogcol = vec3(0.2, 0.2, 0.2);
-
-  	color = vec4(mix(vec3(r, r, r), fogcol, fog), 1);
+    vec3 fogcol = vec3(0.5, 0.5, 0.5);
+    color = vec4(mix(vec3(r, r, r), fogcol, fog), 1);
 
   } else {
-  	color = vec4(0.2, 0.2, 0.2, 1);
+    color = vec4(0.5, 0.5, 0.5, 1);
   }
 
 }
